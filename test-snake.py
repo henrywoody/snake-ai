@@ -1,5 +1,5 @@
 import unittest
-from mock import patch, call
+from mock import patch, call, MagicMock
 import numpy as np
 
 from snake import Snake
@@ -8,16 +8,16 @@ from snake import Snake
 class SnakeBodyPieceMoveToTest(unittest.TestCase):
 	def setUp(self):
 		init_position = [0,0]
-		self.body_peice = Snake.BodyPiece(init_position)
+		self.body_piece = Snake.BodyPiece(init_position)
 
 	def test_moves_body_piece_to_new_position(self):
 		'''Snake.BodyPiece.move_to moves the body_piece piece to the given position'''
 		init_position = [0,0]
 		expected_position = [1,1]
 		
-		self.body_peice.move_to(expected_position)
+		self.body_piece.move_to(expected_position)
 
-		self.assertListEqual(self.body_peice.position, expected_position)
+		self.assertListEqual(self.body_piece.position, expected_position)
 
 	@patch.object(Snake.BodyPiece, 'update_history')
 	def test_calls_update_history_with_new_position(self, mock_update_history):
@@ -25,7 +25,7 @@ class SnakeBodyPieceMoveToTest(unittest.TestCase):
 		init_position = [0,0]
 		expected_position = [1,1]
 		
-		self.body_peice.move_to(expected_position)
+		self.body_piece.move_to(expected_position)
 
 		expected_calls = [call(expected_position)]
 		mock_update_history.assert_has_calls(expected_calls)
@@ -33,46 +33,60 @@ class SnakeBodyPieceMoveToTest(unittest.TestCase):
 class SnakeBodyPieceUpdateHistoryTest(unittest.TestCase):
 	def setUp(self):
 		init_position = [0,0]
-		self.body_peice = Snake.BodyPiece(init_position)
+		self.body_piece = Snake.BodyPiece(init_position)
 
 	def test_appends_new_position_to_history(self):
 		'''when given a new value BodyPiece.update_history appends the new position to the end of the BodyPiece's history'''
 		expected_position = [1,2]
-		self.body_peice.history = [[0,0], [1,1]]
+		self.body_piece.history = [[0,0], [1,1]]
 		
-		self.body_peice.update_history(expected_position)
+		self.body_piece.update_history(expected_position)
 
-		self.assertListEqual(self.body_peice.history[-1], expected_position)
+		self.assertListEqual(self.body_piece.history[-1], expected_position)
 
 	def test_trims_history_if_necessary(self):
 		'''if the length of the BodyPiece's history is greater than max_history, update_history trims the history by removing from the front'''
-		self.body_peice.max_history = 3
+		self.body_piece.max_history = 3
 		expected_position = [1,2]
 		init_history = [[0,0], [1,1], [2,1], [2,2], [1,1]]
-		self.body_peice.history = init_history[:]
+		self.body_piece.history = init_history[:]
 		
-		self.body_peice.update_history(expected_position)
+		self.body_piece.update_history(expected_position)
 
-		self.assertListEqual(self.body_peice.history, init_history[3:] + [expected_position])
+		self.assertListEqual(self.body_piece.history, init_history[3:] + [expected_position])
 
 	def test_does_not_trim_history_if_not_necessary(self):
 		'''if the length of the BodyPiece's history is less than or equal to max_history, update_history does not trim the history'''
-		self.body_peice.max_history = 5
+		self.body_piece.max_history = 5
 		expected_position = [1,2]
 		init_history = [[0,0], [1,1], [2,1], [2,2]]
-		self.body_peice.history = init_history[:]
+		self.body_piece.history = init_history[:]
 		
-		self.body_peice.update_history(expected_position)
+		self.body_piece.update_history(expected_position)
 
-		self.assertListEqual(self.body_peice.history, init_history + [expected_position])
+		self.assertListEqual(self.body_piece.history, init_history + [expected_position])
+
+
+class SnakeBodyPieceDrawTest(unittest.TestCase):
+	def setUp(self):
+		init_position = [0.1,0.9]
+		self.body_piece = Snake.BodyPiece(init_position)
+
+	@patch('pygame.draw.circle')
+	def test_calls_pygame_draw_circle_with_the_correct_arguments(self, mock_draw_circle):
+		'''Snake.BodyPiece.draw calls pygame.draw.circle with information about the piece's position (rounded) and size and color and the given surface object'''
+		surface = MagicMock()
+		self.body_piece.draw(surface)
+
+		draw_position = [int(round(x)) for x in self.body_piece.position]
+		mock_draw_circle.assert_called_once_with(surface, self.body_piece.color, draw_position, self.body_piece.size)
 
 
 class SnakeTurnTest(unittest.TestCase):
 	def setUp(self):
 		init_position = [0,0]
 		init_direction = 0
-		init_speed = 1
-		self.snake = Snake(init_position, init_direction, init_speed)
+		self.snake = Snake(init_position, init_direction)
 
 	def test_adds_given_angle_to_direction_mod_2pi(self):
 		'''Snake.turn takes an angle and adds it to its direction (mod 2*pi)'''
@@ -91,8 +105,7 @@ class SnakeMoveTest(unittest.TestCase):
 	def setUp(self):
 		init_position = [0,0]
 		init_direction = 0
-		init_speed = 1
-		self.snake = Snake(init_position, init_direction, init_speed)
+		self.snake = Snake(init_position, init_direction)
 
 	@patch.object(Snake, 'calc_next_position', return_value=[5,5])
 	@patch.object(Snake.BodyPiece, 'move_to')
@@ -129,8 +142,7 @@ class SnakeCalcNextPositionTest(unittest.TestCase):
 	def setUp(self):
 		init_position = [0,0]
 		init_direction = 0
-		init_speed = 1
-		self.snake = Snake(init_position, init_direction, init_speed)
+		self.snake = Snake(init_position, init_direction)
 
 	def test_calculates_next_position_according_to_speed_and_direction(self):
 		'''Snake.calc_next_position calculates the next positiion according to its speed and direction'''
@@ -144,6 +156,23 @@ class SnakeCalcNextPositionTest(unittest.TestCase):
 			next_position = self.snake.calc_next_position()
 
 			self.assertListEqual(next_position, [expected_x, expected_y])
+
+
+class SnakeDrawTest(unittest.TestCase):
+	def setUp(self):
+		init_position = [0,0]
+		init_direction = 0
+		self.snake = Snake(init_position, init_direction)
+
+	@patch.object(Snake.BodyPiece, 'draw')
+	def test_calls_pygame_draw_circle_with_the_correct_arguments(self, mock_draw):
+		'''Snake.draw calls draw on each of its body_pieces, passing the given surface along'''
+		self.snake.body = [Snake.BodyPiece([0,0]) for _ in range(5)]
+		surface = MagicMock()
+		self.snake.draw(surface)
+
+		expected_calls = [call(surface) for _ in range(5)]
+		mock_draw.assert_has_calls(expected_calls)
 
 
 

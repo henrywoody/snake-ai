@@ -1,10 +1,11 @@
 import numpy as np
+import pygame
 
 
 class Snake:
-	def __init__(self, position, direction, speed, brain_layers=None):
+	def __init__(self, position, direction, brain_layers=None):
 		self.direction = direction
-		self.speed = speed
+		self.speed = 0.1
 		self.body = [self.BodyPiece(position)]
 		self.is_alive = True
 
@@ -25,12 +26,18 @@ class Snake:
 		next_y = head_piece.position[1] + self.speed * np.sin(self.direction)
 		return [next_x, next_y]
 
+	def draw(self, surface):
+		for body_piece in self.body:
+			body_piece.draw(surface)
+
 	class BodyPiece:
 		def __init__(self, position):
 			self.position = position[:]
 			self.history = [position[:]]
 			self.max_history = 5
 			self.visual_encoding = [1,0]
+			self.size = 2
+			self.color = (0, 0, 0)
 
 		def move_to(self, position):
 			self.position = position
@@ -41,4 +48,6 @@ class Snake:
 			if len(self.history) > self.max_history:
 				self.history = self.history[-self.max_history:]
 
-
+		def draw(self, surface):
+			rounded_position = [int(round(x)) for x in self.position]
+			pygame.draw.circle(surface, self.color, rounded_position, self.size)
