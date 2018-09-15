@@ -14,6 +14,10 @@ class Snake:
 		self.body = [self.BodyPiece(position)]
 		self.is_alive = True
 
+	def grow(self):
+		position = self.body[-1].history[0]
+		self.body.append(self.BodyPiece(position))
+
 	def turn(self, angle):
 		self.direction = (self.direction + angle) % (2*np.pi)
 
@@ -30,6 +34,13 @@ class Snake:
 		next_x = head_piece.position[0] + self.speed * np.cos(self.direction)
 		next_y = head_piece.position[1] + self.speed * np.sin(self.direction)
 		return [next_x, next_y]
+
+	def is_touching_tail(self):
+		head = self.body[0]
+		for body_piece in self.body[2:]: #skipping first piece because they _should_ be touching
+			if utils.are_touching(head, body_piece):
+				return True
+		return False
 
 	def draw(self, surface):
 		for body_piece in self.body:

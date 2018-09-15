@@ -5,6 +5,35 @@ import numpy as np
 from snake import Snake
 
 
+class SnakeGrowTest(unittest.TestCase):
+	def setUp(self):
+		init_position = [0,0]
+		init_direction = 0
+		self.snake = Snake(init_position, init_direction)
+		self.snake.body[0].history = [[3,3], [2,2], [1,1], [0,0]]
+
+	def test_adds_new_body_piece_at_correct_position_with_only_one_body_piece(self):
+		'''Snake.grow adds a new body piece with position equal to the oldest position of the last body piece'''
+		self.snake.grow()
+
+		expected_length = 2
+		self.assertEqual(len(self.snake.body), expected_length)
+		expected_position = self.snake.body[-2].history[0]
+		self.assertListEqual(self.snake.body[-1].position, expected_position)
+
+	def test_adds_new_body_piece_at_correct_position_with_multiple_body_pieces(self):
+		'''Snake.grow adds a new body piece with position equal to the oldest position of the last body piece'''
+		last_piece = Snake.BodyPiece([1,1])
+		last_piece.history = [[4,4], [3,3], [2,2], [1,1]]
+		self.snake.body.append(last_piece)
+
+		self.snake.grow()
+
+		expected_length = 3
+		self.assertEqual(len(self.snake.body), expected_length)
+		expected_position = last_piece.history[0]
+		self.assertListEqual(self.snake.body[-1].position, expected_position)
+
 class SnakeTurnTest(unittest.TestCase):
 	def setUp(self):
 		init_position = [0,0]
@@ -79,6 +108,29 @@ class SnakeCalcNextPositionTest(unittest.TestCase):
 			next_position = self.snake.calc_next_position()
 
 			self.assertListEqual(next_position, [expected_x, expected_y])
+
+
+class SnakeIsTouchingTailTest(unittest.TestCase):
+	def setUp(self):
+		init_position = [0,0]
+		init_direction = 0
+		self.snake = Snake(init_position, init_direction)
+		for _ in range(5):
+			self.snake.body.append(Snake.BodyPiece([0,0]))
+
+	@patch('utils.are_touching', side_effect=[False, False, True, False])
+	def test_returns_True_if_head_is_touching_any_body_piece(self, mock_are_touching):
+		'''Snake.is_touching_tail returns True if are_touching returns True for the head and any other body piece (except the second)'''
+		touching_tail = self.snake.is_touching_tail()
+
+		self.assertTrue(touching_tail)
+
+	@patch('utils.are_touching', return_value=False)
+	def test_returns_False_if_head_is_not_touching_any_body_piece(self, mock_are_touching):
+		'''Snake.is_touching_tail returns False if are_touching returns False every time'''
+		touching_tail = self.snake.is_touching_tail()
+
+		self.assertFalse(touching_tail)
 
 
 class SnakeDrawTest(unittest.TestCase):
