@@ -5,83 +5,6 @@ import numpy as np
 from snake import Snake
 
 
-class SnakeBodyPieceMoveToTest(unittest.TestCase):
-	def setUp(self):
-		init_position = [0,0]
-		self.body_piece = Snake.BodyPiece(init_position)
-
-	def test_moves_body_piece_to_new_position(self):
-		'''Snake.BodyPiece.move_to moves the body_piece piece to the given position'''
-		init_position = [0,0]
-		expected_position = [1,1]
-		
-		self.body_piece.move_to(expected_position)
-
-		self.assertListEqual(self.body_piece.position, expected_position)
-
-	@patch.object(Snake.BodyPiece, 'update_history')
-	def test_calls_update_history_with_new_position(self, mock_update_history):
-		'''Snake.Head.move calls update_history with the new position'''
-		init_position = [0,0]
-		expected_position = [1,1]
-		
-		self.body_piece.move_to(expected_position)
-
-		expected_calls = [call(expected_position)]
-		mock_update_history.assert_has_calls(expected_calls)
-
-class SnakeBodyPieceUpdateHistoryTest(unittest.TestCase):
-	def setUp(self):
-		init_position = [0,0]
-		self.body_piece = Snake.BodyPiece(init_position)
-
-	def test_appends_new_position_to_history(self):
-		'''when given a new value BodyPiece.update_history appends the new position to the end of the BodyPiece's history'''
-		expected_position = [1,2]
-		self.body_piece.history = [[0,0], [1,1]]
-		
-		self.body_piece.update_history(expected_position)
-
-		self.assertListEqual(self.body_piece.history[-1], expected_position)
-
-	def test_trims_history_if_necessary(self):
-		'''if the length of the BodyPiece's history is greater than max_history, update_history trims the history by removing from the front'''
-		self.body_piece.max_history = 3
-		expected_position = [1,2]
-		init_history = [[0,0], [1,1], [2,1], [2,2], [1,1]]
-		self.body_piece.history = init_history[:]
-		
-		self.body_piece.update_history(expected_position)
-
-		self.assertListEqual(self.body_piece.history, init_history[3:] + [expected_position])
-
-	def test_does_not_trim_history_if_not_necessary(self):
-		'''if the length of the BodyPiece's history is less than or equal to max_history, update_history does not trim the history'''
-		self.body_piece.max_history = 5
-		expected_position = [1,2]
-		init_history = [[0,0], [1,1], [2,1], [2,2]]
-		self.body_piece.history = init_history[:]
-		
-		self.body_piece.update_history(expected_position)
-
-		self.assertListEqual(self.body_piece.history, init_history + [expected_position])
-
-
-class SnakeBodyPieceDrawTest(unittest.TestCase):
-	def setUp(self):
-		init_position = [0.1,0.9]
-		self.body_piece = Snake.BodyPiece(init_position)
-
-	@patch('pygame.draw.circle')
-	def test_calls_pygame_draw_circle_with_the_correct_arguments(self, mock_draw_circle):
-		'''Snake.BodyPiece.draw calls pygame.draw.circle with information about the piece's position (rounded) and size and color and the given surface object'''
-		surface = MagicMock()
-		self.body_piece.draw(surface)
-
-		draw_position = [int(round(x)) for x in self.body_piece.position]
-		mock_draw_circle.assert_called_once_with(surface, self.body_piece.color, draw_position, self.body_piece.size)
-
-
 class SnakeTurnTest(unittest.TestCase):
 	def setUp(self):
 		init_position = [0,0]
@@ -173,6 +96,68 @@ class SnakeDrawTest(unittest.TestCase):
 
 		expected_calls = [call(surface) for _ in range(5)]
 		mock_draw.assert_has_calls(expected_calls)
+
+
+class SnakeBodyPieceMoveToTest(unittest.TestCase):
+	def setUp(self):
+		init_position = [0,0]
+		self.body_piece = Snake.BodyPiece(init_position)
+
+	def test_moves_body_piece_to_new_position(self):
+		'''Snake.BodyPiece.move_to moves the body_piece piece to the given position'''
+		init_position = [0,0]
+		expected_position = [1,1]
+		
+		self.body_piece.move_to(expected_position)
+
+		self.assertListEqual(self.body_piece.position, expected_position)
+
+	@patch.object(Snake.BodyPiece, 'update_history')
+	def test_calls_update_history_with_new_position(self, mock_update_history):
+		'''Snake.Head.move calls update_history with the new position'''
+		init_position = [0,0]
+		expected_position = [1,1]
+		
+		self.body_piece.move_to(expected_position)
+
+		expected_calls = [call(expected_position)]
+		mock_update_history.assert_has_calls(expected_calls)
+
+class SnakeBodyPieceUpdateHistoryTest(unittest.TestCase):
+	def setUp(self):
+		init_position = [0,0]
+		self.body_piece = Snake.BodyPiece(init_position)
+
+	def test_appends_new_position_to_history(self):
+		'''when given a new value BodyPiece.update_history appends the new position to the end of the BodyPiece's history'''
+		expected_position = [1,2]
+		self.body_piece.history = [[0,0], [1,1]]
+		
+		self.body_piece.update_history(expected_position)
+
+		self.assertListEqual(self.body_piece.history[-1], expected_position)
+
+	def test_trims_history_if_necessary(self):
+		'''if the length of the BodyPiece's history is greater than max_history, update_history trims the history by removing from the front'''
+		self.body_piece.max_history = 3
+		expected_position = [1,2]
+		init_history = [[0,0], [1,1], [2,1], [2,2], [1,1]]
+		self.body_piece.history = init_history[:]
+		
+		self.body_piece.update_history(expected_position)
+
+		self.assertListEqual(self.body_piece.history, init_history[3:] + [expected_position])
+
+	def test_does_not_trim_history_if_not_necessary(self):
+		'''if the length of the BodyPiece's history is less than or equal to max_history, update_history does not trim the history'''
+		self.body_piece.max_history = 5
+		expected_position = [1,2]
+		init_history = [[0,0], [1,1], [2,1], [2,2]]
+		self.body_piece.history = init_history[:]
+		
+		self.body_piece.update_history(expected_position)
+
+		self.assertListEqual(self.body_piece.history, init_history + [expected_position])
 
 
 

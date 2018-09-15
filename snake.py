@@ -1,11 +1,16 @@
 import numpy as np
 import pygame
 
+from mixins import DrawableMixin
+import utils
+
+SNAKE_SPEED = 0.5
+
 
 class Snake:
 	def __init__(self, position, direction, brain_layers=None):
 		self.direction = direction
-		self.speed = 0.1
+		self.speed = SNAKE_SPEED
 		self.body = [self.BodyPiece(position)]
 		self.is_alive = True
 
@@ -30,14 +35,14 @@ class Snake:
 		for body_piece in self.body:
 			body_piece.draw(surface)
 
-	class BodyPiece:
+	class BodyPiece(DrawableMixin):
 		def __init__(self, position):
 			self.position = position[:]
-			self.history = [position[:]]
-			self.max_history = 5
-			self.visual_encoding = [1,0]
-			self.size = 2
+			self.size = 5
 			self.color = (0, 0, 0)
+			self.visual_encoding = [1,0]
+			self.history = [position[:]]
+			self.max_history = int(self.size * 2 / SNAKE_SPEED) # to get the piece spacing correct
 
 		def move_to(self, position):
 			self.position = position
@@ -47,7 +52,3 @@ class Snake:
 			self.history.append(position[:])
 			if len(self.history) > self.max_history:
 				self.history = self.history[-self.max_history:]
-
-		def draw(self, surface):
-			rounded_position = [int(round(x)) for x in self.position]
-			pygame.draw.circle(surface, self.color, rounded_position, self.size)
