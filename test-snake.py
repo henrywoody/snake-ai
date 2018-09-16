@@ -23,7 +23,8 @@ class SnakeUpdateTest(unittest.TestCase):
 	@patch.object(Snake, 'decide', return_value=1)
 	@patch.object(Snake, 'act')
 	@patch.object(Snake, 'move')
-	def test_calls_all_methods(self, mock_move, mock_act, mock_decide, mock_look):
+	@patch.object(Snake, 'check_if_touching_tail')
+	def test_calls_all_methods(self, mock_check_tail, mock_move, mock_act, mock_decide, mock_look):
 		'''Snake.update calls look, decide, act, and move'''
 		other_objects = [1,2,3]
 
@@ -33,6 +34,7 @@ class SnakeUpdateTest(unittest.TestCase):
 		mock_decide.assert_called_with(mock_look.return_value)
 		mock_act.assert_called_with(mock_decide.return_value)
 		self.assertTrue(mock_move.called)
+		self.assertTrue(mock_check_tail.called)
 
 class SnakeLookTest(unittest.TestCase):
 	def setUp(self):
@@ -319,7 +321,7 @@ class SnakeCalcNextPositionTest(unittest.TestCase):
 			self.assertListEqual(next_position, [expected_x, expected_y])
 
 
-class SnakeIsTouchingTailTest(unittest.TestCase):
+class SnakeCheckIfTouchingTailTest(unittest.TestCase):
 	def setUp(self):
 		init_position = [0,0]
 		init_direction = 0
@@ -328,18 +330,18 @@ class SnakeIsTouchingTailTest(unittest.TestCase):
 			self.snake.body.append(Snake.BodyPiece([0,0]))
 
 	@patch('utils.are_touching', side_effect=[False, False, True, False])
-	def test_returns_True_if_head_is_touching_any_body_piece(self, mock_are_touching):
-		'''Snake.is_touching_tail returns True if are_touching returns True for the head and any other body piece (except the second)'''
-		touching_tail = self.snake.is_touching_tail()
+	def test_snake_dies_if_head_is_touching_any_body_piece(self, mock_are_touching):
+		'''Snake.check_if_touching_tail causes the snake to die if are_touching returns True for the head and any other body piece (except the second)'''
+		self.snake.check_if_touching_tail()
 
-		self.assertTrue(touching_tail)
+		self.assertFalse(self.snake.is_alive)
 
 	@patch('utils.are_touching', return_value=False)
-	def test_returns_False_if_head_is_not_touching_any_body_piece(self, mock_are_touching):
-		'''Snake.is_touching_tail returns False if are_touching returns False every time'''
-		touching_tail = self.snake.is_touching_tail()
+	def test_snake_does_not_die_if_head_is_not_touching_any_body_piece(self, mock_are_touching):
+		'''Snake.check_if_touching_tail does not cause the snake to die if are_touching returns False every time'''
+		touching_tail = self.snake.check_if_touching_tail()
 
-		self.assertFalse(touching_tail)
+		self.assertTrue(self.snake.is_alive)
 
 
 class SnakeDrawTest(unittest.TestCase):

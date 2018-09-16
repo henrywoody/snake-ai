@@ -27,6 +27,7 @@ class Snake:
 		decision = self.decide(vision)
 		self.act(decision)
 		self.move()
+		self.check_if_touching_tail()
 
 	def look(self, other_objects):
 		visuals = [None for eye in self.eye_angles]
@@ -81,12 +82,12 @@ class Snake:
 		next_y = head_piece.position[1] + self.speed * np.sin(self.direction)
 		return [next_x, next_y]
 
-	def is_touching_tail(self):
+	def check_if_touching_tail(self):
 		head = self.body[0]
 		for body_piece in self.body[2:]: #skipping first piece because they _should_ be touching
 			if utils.are_touching(head, body_piece):
-				return True
-		return False
+				self.is_alive = False
+				return
 
 	def draw(self, surface):
 		for body_piece in self.body:
@@ -111,15 +112,18 @@ class Snake:
 				self.history = self.history[-self.max_history:]
 
 	class Brain:
-		def __init__(self, layers):
-			self.layers = layers
-			if not self.layers:
+		def __init__(self, genes):
+			self.dimensions = [15, 15, 5] #15 comes from len(snake.eye_angles) * len(visual_encoding)
+			if not genes:
 				self.layers = self.generate_random_layers()
+			else:
+				w1 = np.array(genes[:self.dimensions[0]*self.dimensions[1]]).reshape(self.dimensions[1], self.dimensions[0])
+				w2 = np.array(genes[self.dimensions[0]*self.dimensions[1]:]).reshape(self.dimensions[2], self.dimensions[1])
+				self.layers = w1,w2
 
 		def generate_random_layers(self):
-			dimensions = [15, 15, 5] #15 comes from len(snake.eye_angles) * len(visual_encoding)
-			w1 = np.random.rand(dimensions[1], dimensions[0])
-			w2 = np.random.rand(dimensions[2], dimensions[1])
+			w1 = np.random.rand(self.dimensions[1], self.dimensions[0])
+			w2 = np.random.rand(self.dimensions[2], self.dimensions[1])
 			return w1,w2
 
 		def sigmoid(self, x):
