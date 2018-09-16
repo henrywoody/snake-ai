@@ -12,6 +12,28 @@ class MockObject:
 		self.size = size
 		self.visual_encoding = visual_encoding
 
+
+class SnakeUpdateTest(unittest.TestCase):
+	def setUp(self):
+		init_position = [0,0]
+		init_direction = 0
+		self.snake = Snake(init_position, init_direction)
+
+	@patch.object(Snake, 'look', return_value=[5,6,100])
+	@patch.object(Snake, 'decide', return_value=1)
+	@patch.object(Snake, 'act')
+	@patch.object(Snake, 'move')
+	def test_calls_all_methods(self, mock_move, mock_act, mock_decide, mock_look):
+		'''Snake.update calls look, decide, act, and move'''
+		other_objects = [1,2,3]
+
+		self.snake.update(other_objects)
+
+		mock_look.assert_called_with(other_objects)
+		mock_decide.assert_called_with(mock_look.return_value)
+		mock_act.assert_called_with(mock_decide.return_value)
+		self.assertTrue(mock_move.called)
+
 class SnakeLookTest(unittest.TestCase):
 	def setUp(self):
 		init_position = [0,0]
@@ -25,7 +47,7 @@ class SnakeLookTest(unittest.TestCase):
 		other_objects = []
 		output = self.snake.look(other_objects)
 
-		expected_output = [[0,0,0], [0,0,0]]
+		expected_output = [0,0,0,0,0,0]
 		self.assertListEqual(output, expected_output)
 
 	def test_returns_zero_list_if_does_not_see_anything(self):
@@ -39,7 +61,7 @@ class SnakeLookTest(unittest.TestCase):
 
 		output = self.snake.look(other_objects)
 
-		expected_output = [[0,0,0]]
+		expected_output = [0,0,0]
 		self.assertListEqual(output, expected_output)
 
 	def test_returns_visual_encoding_of_object_it_sees(self):
@@ -52,7 +74,7 @@ class SnakeLookTest(unittest.TestCase):
 
 		output = self.snake.look(other_objects)
 
-		expected_output = [expected_seen_object.visual_encoding + [2]]
+		expected_output = expected_seen_object.visual_encoding + [2]
 		self.assertListEqual(output, expected_output)
 
 	def test_returns_visual_encoding_of_closest_object_it_sees(self):
@@ -66,7 +88,7 @@ class SnakeLookTest(unittest.TestCase):
 
 		output = self.snake.look(other_objects)
 
-		expected_output = [expected_seen_object.visual_encoding + [2]]
+		expected_output = expected_seen_object.visual_encoding + [2]
 		self.assertListEqual(output, expected_output)
 
 	def test_can_see_an_object_if_angle_does_not_pass_through_center_but_passes_through_some_of_object(self):
@@ -86,7 +108,7 @@ class SnakeLookTest(unittest.TestCase):
 		output = self.snake.look(other_objects)
 
 		snake_head = self.snake.body[0]
-		expected_output = [expected_seen_object.visual_encoding + [utils.calc_distance(snake_head.position, expected_seen_object.position)]]
+		expected_output = expected_seen_object.visual_encoding + [utils.calc_distance(snake_head.position, expected_seen_object.position)]
 		self.assertListEqual(output, expected_output)
 
 	def test_can_handle_an_object_with_distance_less_than_size(self):
@@ -106,10 +128,89 @@ class SnakeLookTest(unittest.TestCase):
 
 		output = self.snake.look(other_objects)
 
-		expected_output = [expected_seen_object.visual_encoding + [10]]
+		expected_output = expected_seen_object.visual_encoding + [10]
 		self.assertListEqual(output, expected_output)
 
 
+class SnakeDecideTest(unittest.TestCase):
+	def setUp(self):
+		init_position = [0,0]
+		init_direction = 0
+		self.snake = Snake(init_position, init_direction)
+
+	@patch.object(Snake.Brain, 'forward')
+	def test_passes_input_to_brain_to_forward(self, mock_forward):
+		'''Snake.decide passes the input list as an array to Snake.Brain.forward'''
+		information = [1,2,3,4]
+
+		self.snake.decide(information)
+
+		actual_input = mock_forward.call_args_list[0][0][0]
+		expected_input = np.array(information)
+		self.assertEqual(type(actual_input), np.ndarray)
+		self.assertTrue(np.array_equal(actual_input, expected_input))
+
+	@patch.object(Snake.Brain, 'forward', return_value=np.array([1,0,0]))
+	def test_returns_argmax_of_output_from_brain_forward(self, mock_forward):
+		'''Snake.decide returns the argmax of the output of Snake.Brain.forward'''
+		information = [1,2,3,4]
+
+		decision = self.snake.decide(information)
+
+		expected_decision = mock_forward.return_value.argmax()
+		self.assertEqual(decision, expected_decision)
+
+
+class SnakeActTest(unittest.TestCase):
+	def setUp(self):
+		init_position = [0,0]
+		init_direction = 0
+		self.snake = Snake(init_position, init_direction)
+
+	@patch.object(Snake, 'turn')
+	def test_snake_does_a_negative_turn_angle1_turn_if_decision_is_0(self, mock_turn):
+		'''if the decision is 0, the snake does negative turn_angle1 turn'''
+		decision = 0
+
+		self.snake.act(decision)
+
+		mock_turn.assert_called_with(-self.snake.turn_angle1)
+
+	@patch.object(Snake, 'turn')
+	def test_snake_does_a_negative_turn_angle2_turn_if_decision_is_1(self, mock_turn):
+		'''if the decision is 1, the snake does negative turn_angle2 turn'''
+		decision = 1
+
+		self.snake.act(decision)
+
+		mock_turn.assert_called_with(-self.snake.turn_angle2)
+
+	@patch.object(Snake, 'turn')
+	def test_snake_does_a_positive_turn_angle1_turn_if_decision_is_2(self, mock_turn):
+		'''if the decisionhis 2, the snake does positive turn_angle1 turn'''
+		decision = 2
+
+		self.snake.act(decision)
+
+		mock_turn.assert_called_with(self.snake.turn_angle1)
+
+	@patch.object(Snake, 'turn')
+	def test_snake_does_positive_turn_angle2_turn_if_decision_is_3(self, mock_turn):
+		'''if the decisionhis 3, the snake does positive turn_angle2 turn'''
+		decision = 3
+
+		self.snake.act(decision)
+
+		mock_turn.assert_called_with(self.snake.turn_angle2)
+
+	@patch.object(Snake, 'turn')
+	def test_snake_does_nothing_if_decision_is_4(self, mock_turn):
+		'''if the decisioniis index 4, the snake does nothing'''
+		decision = 4
+
+		self.snake.act(decision)
+
+		self.assertFalse(mock_turn.called)
 
 
 class SnakeGrowTest(unittest.TestCase):

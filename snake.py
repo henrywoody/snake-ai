@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import pygame
+from functools import reduce
 
 from mixins import DrawableMixin
 import utils
@@ -13,8 +14,25 @@ class Snake:
 		self.direction = direction
 		self.speed = SNAKE_SPEED
 		self.body = [self.BodyPiece(position)]
-		self.eye_angles = [0]
+		self.turn_angle1 = np.pi/30
+		self.turn_angle2 = np.pi/10
+		self.eye_angles = [0, self.turn_angle1, -self.turn_angle1, self.turn_angle2, -self.turn_angle2]
+		dimensions = [
+			len(self.eye_angles) * 3,
+			len(self.eye_angles) * 3,
+			5
+		]
+		self.brain = self.Brain(dimensions=dimensions)
 		self.is_alive = True
+
+		if self.turn_angle1 > np.pi or self.turn_angle2 > np.pi: self.is_alive = False
+
+	def update(self, other_objects):
+		vision = self.look(other_objects)
+		print(vision)
+		decision = self.decide(vision)
+		self.act(decision)
+		self.move()
 
 	def look(self, other_objects):
 		visuals = [None for eye in self.eye_angles]
@@ -32,7 +50,21 @@ class Snake:
 				if abs(view_angle - angle) <= view_angle_freedom:
 					visuals[i] = other_object.visual_encoding + [distance]
 
-		return [visual if visual is not None else [0,0,0] for visual in visuals]
+		return reduce(lambda a,x: a + x if x is not None else a + [0,0,0], visuals, [])
+
+	def decide(self, information):
+		decision_vector = self.brain.forward(np.array(information))
+		return decision_vector.argmax()
+
+	def act(self, decision):
+		if decision == 0:
+			self.turn(-self.turn_angle1)
+		elif decision == 1:
+			self.turn(-self.turn_angle2)
+		elif decision == 2:
+			self.turn(self.turn_angle1)
+		elif decision == 3:
+			self.turn(self.turn_angle2)
 
 	def grow(self):
 		position = self.body[-1].history[0]
@@ -84,9 +116,22 @@ class Snake:
 			if len(self.history) > self.max_history:
 				self.history = self.history[-self.max_history:]
 
+	class Brain:
+		def __init__(self, layers=None, dimensions=None):
+			self.layers = layers
+			if self.layers is None:
+				self.layers = self.generate_random_layers(dimensions)
 
+		def generate_random_layers(self, dimensions):
+			w1 = np.random.rand(dimensions[1], dimensions[0])
+			w2 = np.random.rand(dimensions[2], dimensions[1])
+			return w1,w2
 
+		def sigmoid(self, x):
+			return 1 / (1 + np.exp(-x))
 
-
-
+		def forward(self, vector):
+			for layer in self.layers:
+				vector = self.sigmoid(np.matmul(layer, vector))
+			return vector
 
