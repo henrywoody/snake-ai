@@ -24,8 +24,8 @@ class Evolver:
 				gene_pool = self.generate_next_generation(results)
 				generation_num += 1
 			except:
-				raise	
-				# break
+				# raise
+				break
 		return sorted(results, key=lambda x: x[0], reverse=True), max_scores
 
 	def evaluate_population(self, gene_pool):
