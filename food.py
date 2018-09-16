@@ -7,4 +7,4 @@ class Food(DrawableMixin):
 		self.position = position
 		self.size = size
 		self.color = (255, 255, 0)
-		self.visual_encoding: [0,1]
+		self.visual_encoding = [0,1]

@@ -3,6 +3,113 @@ from mock import patch, call, MagicMock
 import numpy as np
 
 from snake import Snake
+import utils
+
+
+class MockObject:
+	def __init__(self, position, size, visual_encoding=[1,1]):
+		self.position = position
+		self.size = size
+		self.visual_encoding = visual_encoding
+
+class SnakeLookTest(unittest.TestCase):
+	def setUp(self):
+		init_position = [0,0]
+		init_direction = np.pi/2
+		self.snake = Snake(init_position, init_direction)
+		self.snake.eye_angles = [0]
+
+	def test_returns_zero_list_if_there_are_no_other_objects(self):
+		'''Snake.look returns [0,0,0] for each eye if there is nothing to see'''
+		self.snake.eye_angles = [0,1]
+		other_objects = []
+		output = self.snake.look(other_objects)
+
+		expected_output = [[0,0,0], [0,0,0]]
+		self.assertListEqual(output, expected_output)
+
+	def test_returns_zero_list_if_does_not_see_anything(self):
+		'''Snake.look returns [0,0,0] for each eye if it does not see anything'''
+		other_objects = [
+			MockObject([2,2], 1),
+			MockObject([0,-2], 1),
+			MockObject([-2,2], 1),
+			MockObject([2,-2], 1)
+		]
+
+		output = self.snake.look(other_objects)
+
+		expected_output = [[0,0,0]]
+		self.assertListEqual(output, expected_output)
+
+	def test_returns_visual_encoding_of_object_it_sees(self):
+		'''Snake.Eye.look returns the visual_encoding and distance of the object it sees'''
+		expected_seen_object = MockObject([0,2], 1, visual_encoding=[2,2])
+		other_objects = [
+			expected_seen_object,
+			MockObject([0,-2], 1, visual_encoding=[1,1])
+		]
+
+		output = self.snake.look(other_objects)
+
+		expected_output = [expected_seen_object.visual_encoding + [2]]
+		self.assertListEqual(output, expected_output)
+
+	def test_returns_visual_encoding_of_closest_object_it_sees(self):
+		'''Snake.Eye.look returns the visual_encoding and distance of the closest object it sees'''
+		expected_seen_object = MockObject([0,2], 1, visual_encoding=[2,2])
+		other_objects = [
+			expected_seen_object,
+			MockObject([0,5], 1, visual_encoding=[1,1]),
+			MockObject([0,-2], 1, visual_encoding=[1,1])
+		]
+
+		output = self.snake.look(other_objects)
+
+		expected_output = [expected_seen_object.visual_encoding + [2]]
+		self.assertListEqual(output, expected_output)
+
+	def test_can_see_an_object_if_angle_does_not_pass_through_center_but_passes_through_some_of_object(self):
+		'''if the angle of the eye and the angle between the snake's head and the object are not equal but close enough (depending on obj size & distance) then the eye can see the object'''
+		''' example: ( ) - object; x - snake;
+
+			( )
+			|
+			|
+			x
+		'''
+		expected_seen_object = MockObject([0.5,5], 1, visual_encoding=[1,1])
+		other_objects = [
+			expected_seen_object
+		]
+
+		output = self.snake.look(other_objects)
+
+		snake_head = self.snake.body[0]
+		expected_output = [expected_seen_object.visual_encoding + [utils.calc_distance(snake_head.position, expected_seen_object.position)]]
+		self.assertListEqual(output, expected_output)
+
+	def test_can_handle_an_object_with_distance_less_than_size(self):
+		'''if the distance is less than the other_object's size, Snake.look does not throw an error'''
+		other_objects = [
+			MockObject([0,1], 5)
+		]
+
+		self.snake.look(other_objects)
+
+	def test_can_see_body_pieces(self):
+		'''Snake.look includes its own body pieces (not including first or second)'''
+		self.snake.body.append(Snake.BodyPiece([0,0]))
+		expected_seen_object = Snake.BodyPiece([0,10])
+		self.snake.body.append(expected_seen_object)
+		other_objects = []
+
+		output = self.snake.look(other_objects)
+
+		expected_output = [expected_seen_object.visual_encoding + [10]]
+		self.assertListEqual(output, expected_output)
+
+
 
 
 class SnakeGrowTest(unittest.TestCase):
@@ -210,6 +317,8 @@ class SnakeBodyPieceUpdateHistoryTest(unittest.TestCase):
 		self.body_piece.update_history(expected_position)
 
 		self.assertListEqual(self.body_piece.history, init_history + [expected_position])
+
+
 
 
 
