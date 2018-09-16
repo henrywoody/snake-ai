@@ -30,19 +30,20 @@ class Board:
 			self.surface = pygame.display.set_mode((self.width, self.height))
 			pygame.display.set_caption('Snake')
 
-	def run(self, max_time=np.inf):
-		timer = 0
-		while self.snake.is_alive:
+	def run(self, time_limit=np.inf, time_bonus=0, max_time=np.inf):
+		time_passed = 0
+		while self.snake.is_alive and time_passed < min(time_limit, max_time):
+			starting_length = len(self.snake.body)
 			self.update()
+			food_eaten = len(self.snake.body) - starting_length
+			time_limit += food_eaten * time_bonus
 
 			if self.animation_on:
 				self.update_animation()
 			
-			timer += 1
-			if timer > max_time:
-				break
+			time_passed += 1
 
-		return len(self.snake.body), self.snake.genome
+		return len(self.snake.body), time_passed
 
 	def update(self):
 		self.snake.update(self.foods)
