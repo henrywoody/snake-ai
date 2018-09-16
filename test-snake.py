@@ -165,7 +165,8 @@ class SnakeActTest(unittest.TestCase):
 	def setUp(self):
 		init_position = [0,0]
 		init_direction = 0
-		self.snake = Snake(init_position, init_direction)
+		genome = [np.pi/5, np.pi/2]
+		self.snake = Snake(init_position, init_direction, genome=genome)
 
 	@patch.object(Snake, 'turn')
 	def test_snake_does_a_negative_turn_angle1_turn_if_decision_is_0(self, mock_turn):

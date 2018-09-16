@@ -10,26 +10,20 @@ SNAKE_SPEED = 0.5
 
 
 class Snake:
-	def __init__(self, position, direction, brain_layers=None):
-		self.direction = direction
+	def __init__(self, init_position, init_direction, genome=[0,0]):
+		self.body = [self.BodyPiece(init_position)]
+		self.direction = init_direction
 		self.speed = SNAKE_SPEED
-		self.body = [self.BodyPiece(position)]
-		self.turn_angle1 = np.pi/30
-		self.turn_angle2 = np.pi/10
+		self.turn_angle1 = genome[0]
+		self.turn_angle2 = genome[1]
 		self.eye_angles = [0, self.turn_angle1, -self.turn_angle1, self.turn_angle2, -self.turn_angle2]
-		dimensions = [
-			len(self.eye_angles) * 3,
-			len(self.eye_angles) * 3,
-			5
-		]
-		self.brain = self.Brain(dimensions=dimensions)
+		self.brain = self.Brain(genome[2:])
 		self.is_alive = True
 
 		if self.turn_angle1 > np.pi or self.turn_angle2 > np.pi: self.is_alive = False
 
 	def update(self, other_objects):
 		vision = self.look(other_objects)
-		print(vision)
 		decision = self.decide(vision)
 		self.act(decision)
 		self.move()
@@ -117,12 +111,13 @@ class Snake:
 				self.history = self.history[-self.max_history:]
 
 	class Brain:
-		def __init__(self, layers=None, dimensions=None):
+		def __init__(self, layers):
 			self.layers = layers
-			if self.layers is None:
-				self.layers = self.generate_random_layers(dimensions)
+			if not self.layers:
+				self.layers = self.generate_random_layers()
 
-		def generate_random_layers(self, dimensions):
+		def generate_random_layers(self):
+			dimensions = [15, 15, 5] #15 comes from len(snake.eye_angles) * len(visual_encoding)
 			w1 = np.random.rand(dimensions[1], dimensions[0])
 			w2 = np.random.rand(dimensions[2], dimensions[1])
 			return w1,w2
