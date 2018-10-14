@@ -6,18 +6,18 @@ from functools import reduce
 from mixins import DrawableMixin
 import utils
 
-SNAKE_SPEED = 0.5
+SNAKE_SPEED = 1.5
 
 
 class Snake:
-	def __init__(self, init_position, init_direction, genome=[0,0]):
+	def __init__(self, init_position, init_direction, genome={"eye_angles": [0,0]}):
 		self.body = [self.BodyPiece(init_position)]
 		self.direction = init_direction
 		self.speed = SNAKE_SPEED
-		self.turn_angle1 = genome[0]
-		self.turn_angle2 = genome[1]
+		self.turn_angle1, self.turn_angle2 = genome["eye_angles"]
 		self.eye_angles = [0, self.turn_angle1, -self.turn_angle1, self.turn_angle2, -self.turn_angle2]
-		self.brain = self.Brain(genome[2:])
+		brain_layers = [genome.get("w1", []), genome.get("w2", [])]
+		self.brain = self.Brain(brain_layers)
 		self.is_alive = True
 
 		if self.turn_angle1 > np.pi or self.turn_angle2 > np.pi: self.is_alive = False
@@ -114,11 +114,11 @@ class Snake:
 	class Brain:
 		def __init__(self, genes):
 			self.dimensions = [15, 15, 5] #15 comes from len(snake.eye_angles) * len(visual_encoding)
-			if not genes:
+			if not (genes[0] and genes[1]):
 				self.layers = self.generate_random_layers()
 			else:
-				w1 = np.array(genes[:self.dimensions[0]*self.dimensions[1]]).reshape(self.dimensions[1], self.dimensions[0])
-				w2 = np.array(genes[self.dimensions[0]*self.dimensions[1]:]).reshape(self.dimensions[2], self.dimensions[1])
+				w1 = np.array(genes[0]).reshape(self.dimensions[1], self.dimensions[0])
+				w2 = np.array(genes[1]).reshape(self.dimensions[2], self.dimensions[1])
 				self.layers = w1,w2
 
 		def generate_random_layers(self):
