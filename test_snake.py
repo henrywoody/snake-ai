@@ -167,7 +167,9 @@ class SnakeActTest(unittest.TestCase):
 	def setUp(self):
 		init_position = [0,0]
 		init_direction = 0
-		genome = [np.pi/5, np.pi/2]
+		genome = {
+			"eye_angles": [np.pi/5, np.pi/2]
+		}
 		self.snake = Snake(init_position, init_direction, genome=genome)
 
 	@patch.object(Snake, 'turn')
