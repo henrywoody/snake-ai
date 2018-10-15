@@ -43,7 +43,7 @@ class Board:
 			
 			time_passed += 1
 
-		return len(self.snake.body), time_passed
+		return len(self.snake.body), time_passed, self.snake.is_alive
 
 	def update(self):
 		self.snake.update(self.foods)

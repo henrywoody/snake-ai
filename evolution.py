@@ -1,3 +1,4 @@
+import json
 import random
 import math
 from holland import Evolver, library
@@ -5,9 +6,10 @@ from board import Board
 
 
 def fitness_function(genome):
-	board = Board(400, 300, num_food=25, snake_genome=genome, animation_on=False)
-	length, time = board.run(time_limit=200, time_bonus=100, max_time=2000)
-	score = length * 100 + time
+	board = Board(200, 150, num_food=1, snake_genome=genome, animation_on=False, seed=98)
+	length, time, is_alive = board.run(time_limit=200, time_bonus=100, max_time=1000)
+	did_die = not is_alive
+	score = length - did_die
 	return score
 
 genome_params = {
@@ -27,7 +29,7 @@ genome_params = {
 		"initial_distribution": lambda: random.random() * 200 - 100,
 		"crossover_function": library.get_point_crossover_function(n_crossover_points=3),
 		"mutation_function": library.get_gaussian_mutation_function(sigma=50),
-		"mutation_rate": 0.15
+		"mutation_rate": 0.2
 
 	},
 	"w2": {
@@ -36,18 +38,18 @@ genome_params = {
 		"initial_distribution": lambda: random.random() * 200 - 100,
 		"crossover_function": library.get_point_crossover_function(n_crossover_points=3),
 		"mutation_function": library.get_gaussian_mutation_function(sigma=50),
-		"mutation_rate": 0.15
+		"mutation_rate": 0.2
 	}
 }
 
 selection_strategy = {
 	"pool": {
 		"top": 15,
-		"bottom": 2,
+		"mid": 2,
 		"random": 2
 	},
 	"parents": {
-		"weighting_function": library.get_polynomial_weighting_function(power=1.5)
+		"weighting_function": library.get_polynomial_weighting_function(power=1.4)
 	}
 }
 
@@ -66,12 +68,18 @@ storage_options = {
 		"format": "json",
 		"file_name": "genomes.json",
 		"path": "./results/",
-		"top": 10
+		"top": 100
 	}
 }
 
+with open("results/genomes.json", 'r') as f:
+	initial_population = [g for s,g in json.loads(f.readline())['results']]
+
 final_pop = evolver.evolve(
-	generation_params={"population_size": 1000, "n_elite": 1},
+	generation_params={"population_size": 1000, "n_elite": 0, "n_random": 20},
+	# initial_population=initial_population,
 	storage_options=storage_options,
 	stop_conditions={"n_generations": math.inf}
 )
+
+# print(final_pop[-1])

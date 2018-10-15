@@ -10,5 +10,7 @@ if __name__ == '__main__':
 		best_result = all_results[-1]
 		snake_genome = best_result[1]
 
-	board = Board(400, 300, num_food=25, snake_genome=snake_genome, seed=random.random())
+	seed = random.randint(0,1000)
+	print(seed)
+	board = Board(400, 300, num_food=5, snake_genome=snake_genome, seed=seed)
 	board.run()
