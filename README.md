@@ -4,7 +4,7 @@ An artificially intelligent player for Snake. The snake's brain is a neural netw
 
 Written in Python using Pygame for graphics/user interaction. Evolution handled by [Holland](https://github.com/lambdalife/holland).
 
-![Sample](https://github.com/henrywoody/snake-ai/blob/master/gallery/sample2.mov)
+![Sample](https://github.com/henrywoody/snake-ai/blob/master/gallery/snippet.gif)
 
 See the [gallery](https://github.com/henrywoody/snake-ai/blob/master/gallery) for more sample runs, corresponding genomes are in [samples](https://github.com/henrywoody/snake-ai/blob/master/samples).
 
